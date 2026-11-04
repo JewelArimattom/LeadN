@@ -20,6 +20,13 @@
 # production
 /build
 
+# local build tools and Android artifacts
+/.tools/
+/callpilot/android/.gradle/
+/callpilot/android/.kotlin/
+/callpilot/android/build/
+/callpilot/android/app/build/
+
 # misc
 .DS_Store
 *.pem
