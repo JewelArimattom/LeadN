@@ -1,0 +1,260 @@
+@import "tailwindcss";
+
+/*
+ * Lead N — Design System Tokens
+ * Pristine Crisp White Light Theme
+ * Palette: Pure White + Crisp Slate + Vivid Amber-Orange Accent (#FF6B2C) + Deep Slate Text
+ */
+
+@theme {
+  /* ── Brand Colors ─────────────────────────────── */
+  --color-navy-950: #0B1222;
+  --color-navy-900: #0F172A;
+  --color-navy-800: #1E293B;
+  --color-navy-700: #334155;
+  --color-navy-600: #475569;
+  --color-navy-500: #64748B;
+
+  --color-accent-50: #FFF7F2;
+  --color-accent-100: #FFEAD9;
+  --color-accent-200: #FFD4B3;
+  --color-accent-300: #FFB380;
+  --color-accent-400: #FF8C4D;
+  --color-accent-500: #FF6B2C;
+  --color-accent-600: #E85A1B;
+  --color-accent-700: #C44A15;
+
+  --color-teal-500: #10B981;
+  --color-teal-600: #059669;
+  --color-teal-50: #ECFDF5;
+
+  /* ── Slate Neutrals (Clean White / Light) ─────── */
+  --color-slate-50: #F8FAFC;
+  --color-slate-100: #F1F5F9;
+  --color-slate-200: #E2E8F0;
+  --color-slate-300: #CBD5E1;
+  --color-slate-400: #94A3B8;
+  --color-slate-500: #64748B;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1E293B;
+  --color-slate-900: #0F172A;
+
+  /* ── Semantic Colors ──────────────────────────── */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-info: #3B82F6;
+
+  /* ── Typography ───────────────────────────────── */
+  --font-heading: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+
+  /* ── Shadows ──────────────────────────────────── */
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+  --shadow-card-hover: 0 12px 30px -10px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.03);
+  --shadow-glow: 0 0 50px -10px rgba(255, 107, 44, 0.18);
+  --shadow-elevated: 0 20px 40px -15px rgba(15, 23, 42, 0.07);
+
+  /* ── Border Radius ────────────────────────────── */
+  --radius-card: 1rem;
+  --radius-button: 0.625rem;
+  --radius-pill: 9999px;
+
+  /* ── Animations ───────────────────────────────── */
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Pure White Modern Theme ─────────── */
+:root {
+  --background: #FFFFFF;
+  --foreground: #0F172A;
+  --muted: #F8FAFC;
+  --muted-foreground: #64748B;
+  --card: #FFFFFF;
+  --card-foreground: #0F172A;
+  --border: #E2E8F0;
+  --input: #E2E8F0;
+  --primary: #FF6B2C;
+  --primary-foreground: #FFFFFF;
+  --secondary: #0F172A;
+  --secondary-foreground: #FFFFFF;
+  --accent-bg: #FFF7F2;
+  --ring: #FF6B2C;
+}
+
+/* Base resets & styles */
+* {
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #FFFFFF;
+  color: #0F172A;
+}
+
+body {
+  background-color: #FFFFFF;
+  color: #0F172A;
+  font-family: var(--font-body);
+  overflow-x: hidden;
+}
+
+/* Focus States */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-button);
+}
+
+/* Selection */
+::selection {
+  background-color: #FFEAD9;
+  color: #0F172A;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Utility Classes */
+.text-gradient {
+  background: linear-gradient(135deg, #FF6B2C 0%, #EA580C 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-navy {
+  background: linear-gradient(135deg, #0F172A 0%, #334155 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.bg-grid-subtle {
+  background-image:
+    linear-gradient(to right, #F1F5F9 1px, transparent 1px),
+    linear-gradient(to bottom, #F1F5F9 1px, transparent 1px);
+  background-size: 3rem 3rem;
+}
+
+.bg-hero-glow {
+  background: radial-gradient(circle 800px at 50% -100px, rgba(255, 107, 44, 0.08), transparent 70%),
+              radial-gradient(circle 600px at 80% 200px, rgba(16, 185, 129, 0.05), transparent 60%);
+}
+
+.container-tight {
+  width: 100%;
+  max-width: 76rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .container-tight {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* ── Mobile App Optimizations ─────────────────── */
+html {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Hide scrollbar for touch swipeable tabs */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Mobile bottom bar safe area */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0.75rem);
+}
+
+/* Touch feedback */
+.active-press:active {
+  transform: scale(0.97);
+  transition: transform 0.1s ease;
+}
+
+/* Toast slide-in animation */
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-in {
+  animation: slideInFromRight 0.3s ease-out, fadeIn 0.3s ease-out;
+}
+
+.slide-in-from-right {
+  animation: slideInFromRight 0.3s ease-out;
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Line clamp */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Custom scrollbar for sidebar lists */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background-color: #CBD5E1;
+  border-radius: 20px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background-color: #94A3B8;
+}
