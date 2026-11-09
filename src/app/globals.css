@@ -155,6 +155,65 @@ body {
               radial-gradient(circle 600px at 80% 200px, rgba(16, 185, 129, 0.05), transparent 60%);
 }
 
+/* Homepage art direction: warm paper, ink typography, and a clear product focal point. */
+.home-hero {
+  position: relative;
+  overflow: hidden;
+  background-color: #fbfaf8;
+  background-image: radial-gradient(ellipse at 78% 30%, rgba(255, 227, 207, 0.62), transparent 42%),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.035) 1px, transparent 1px);
+  background-size: auto, 72px 72px;
+}
+
+.home-hero-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+  align-items: center;
+  gap: clamp(2rem, 5vw, 5rem);
+}
+
+.home-hero-copy {
+  padding-block: clamp(1rem, 4vw, 3.5rem);
+}
+
+.home-hero-highlight {
+  color: #e85a1b;
+  text-decoration: underline;
+  text-decoration-color: #ffb380;
+  text-decoration-thickness: 0.09em;
+  text-underline-offset: 0.12em;
+}
+
+.home-hero-product {
+  min-width: 0;
+}
+
+.home-hero-product > div {
+  border-color: rgba(203, 213, 225, 0.9);
+  box-shadow: 0 35px 90px -44px rgba(15, 23, 42, 0.38), 0 10px 30px -20px rgba(232, 90, 27, 0.25);
+}
+
+@media (max-width: 900px) {
+  .home-hero-layout {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .home-hero-copy {
+    max-width: 46rem;
+    margin-inline: auto;
+    text-align: center;
+  }
+
+  .home-hero-copy > div:nth-of-type(2) {
+    justify-content: center;
+  }
+
+  .home-hero-product {
+    margin-top: 0.5rem;
+  }
+}
+
 .container-tight {
   width: 100%;
   max-width: 76rem;

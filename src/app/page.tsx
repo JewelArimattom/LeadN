@@ -3,29 +3,20 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  Phone,
   PhoneCall,
-  ClipboardCheck,
-  Upload,
-  MessageSquare,
   Sparkles,
-  BarChart3,
   ArrowRight,
   CheckCircle2,
-  XCircle,
   FileSpreadsheet,
   AlertOctagon,
   Clock,
   Smartphone,
-  ShieldCheck,
   Building2,
   GraduationCap,
   Briefcase,
   Sun,
   Shield,
-  Zap,
 } from "lucide-react";
-import { siteConfig } from "@/config/site";
 import { features } from "@/config/nav";
 import { pricingPlans } from "@/config/pricing";
 import { Button } from "@/components/ui/button";
@@ -116,67 +107,63 @@ const industries = [
 
 export default function HomePage() {
   const [activeIndustry, setActiveIndustry] = useState(0);
-  const [waitlistEmail, setWaitlistEmail] = useState("");
-  const [waitlistDone, setWaitlistDone] = useState(false);
-
-  const handleQuickWaitlist = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!waitlistEmail) return;
-    setWaitlistDone(true);
-  };
 
   return (
     <div className="bg-white">
       {/* ──────────────── 1. HERO SECTION ──────────────── */}
-      <section className="pt-24 pb-14 md:pt-36 md:pb-24 bg-hero-glow border-b border-slate-100">
-        <div className="container-tight text-center">
+      <section className="home-hero pt-24 pb-14 md:pt-32 md:pb-20 border-b border-slate-200">
+        <div className="container-tight">
+          <div className="home-hero-layout">
+            <div className="home-hero-copy">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-orange-50 text-orange-700 border border-orange-200/70 mb-5 shadow-2xs">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            Built for 100+ Dials/Day • WhatsApp Integrated
+          <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white/80 px-3.5 py-1.5 text-xs font-semibold text-orange-800 shadow-sm mb-6">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            The calling workspace for growing sales teams
           </div>
 
           {/* Main Headline */}
-          <h1 className="font-heading text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 max-w-4xl mx-auto leading-[1.15]">
-            Know exactly who to <span className="text-gradient">call next</span>.
+          <h1 className="font-heading text-4xl sm:text-5xl lg:text-[4.5rem] font-extrabold tracking-[-0.055em] text-slate-950 max-w-2xl leading-[1.02]">
+            Every lead has a <span className="home-hero-highlight">next move.</span>
           </h1>
 
           {/* Subheadline */}
-          <p className="mt-4 sm:mt-5 text-sm sm:text-lg md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            Stop losing leads to spreadsheets. Lead N gives sales reps a sequential call queue, 1-tap outcome logging, and automated WhatsApp follow-ups so zero deals slip through.
+          <p className="mt-5 text-base sm:text-lg text-slate-600 max-w-xl leading-relaxed">
+            Lead N turns scattered enquiries into a clear calling queue, quick call notes, and timely follow-ups your whole team can see.
           </p>
 
           {/* CTAs - Mobile Thumb-friendly */}
-          <div className="mt-7 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 max-w-md mx-auto sm:max-w-none">
-            <Button size="lg" href="/signup" className="w-full sm:w-auto h-12 text-sm sm:text-base font-bold shadow-md shadow-orange-500/25 active-press">
-              Start Calling Free — No CC
+          <div className="mt-7 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 max-w-md sm:max-w-none">
+            <Button size="lg" href="/signup" className="w-full sm:w-auto h-12 text-sm sm:text-base font-bold shadow-lg shadow-orange-500/20 active-press">
+              Get started with Lead N
               <ArrowRight className="h-4 w-4 ml-1" />
             </Button>
             <Button variant="outline" size="lg" href="#live-queue-preview" className="w-full sm:w-auto h-12 text-sm sm:text-base font-semibold active-press">
-              <PhoneCall className="h-4 w-4 mr-1 text-orange-500" />
-              Try Live Queue Below
+              <PhoneCall className="h-4 w-4 mr-1 text-orange-600" />
+              Explore the live preview
             </Button>
           </div>
 
           {/* Proof bullets */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-semibold text-slate-600">
+          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-semibold text-slate-600">
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-              2.4x more daily dials
+              One clear queue for every rep
             </span>
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-              Zero dropped follow-ups
+              Call outcomes in a tap
             </span>
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-              1-tap WhatsApp brochures
+              Follow-ups stay visible
             </span>
           </div>
 
           {/* Interactive Realistic Product Mockup */}
-          <div className="mt-10 sm:mt-14">
+            </div>
+            <div className="home-hero-product">
             <HeroProductMockup />
+            </div>
           </div>
         </div>
       </section>
@@ -463,10 +450,11 @@ export default function HomePage() {
             {industries.map((ind, idx) => {
               const Icon = ind.icon;
               return (
-                <div
+                <button
                   key={ind.name}
                   onClick={() => setActiveIndustry(idx)}
-                  className={`min-w-[270px] sm:min-w-0 snap-start p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between active-press ${
+                  aria-pressed={activeIndustry === idx}
+                  className={`min-w-[270px] sm:min-w-0 snap-start p-5 rounded-2xl border transition-all cursor-pointer text-left flex flex-col justify-between active-press ${
                     activeIndustry === idx
                       ? "border-orange-500 bg-orange-50/30 shadow-xs ring-2 ring-orange-500/10"
                       : "border-slate-200 bg-white hover:border-slate-300"
@@ -483,7 +471,7 @@ export default function HomePage() {
                       {ind.description}
                     </p>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
@@ -603,26 +591,9 @@ export default function HomePage() {
           </p>
 
           <div className="mt-8 max-w-md mx-auto">
-            {waitlistDone ? (
-              <div className="p-4 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-sm flex items-center justify-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-emerald-400" />
-                You&apos;re in! We will email you with your invitation key shortly.
-              </div>
-            ) : (
-              <form onSubmit={handleQuickWaitlist} className="flex flex-col sm:flex-row gap-2">
-                <input
-                  type="email"
-                  required
-                  value={waitlistEmail}
-                  onChange={(e) => setWaitlistEmail(e.target.value)}
-                  placeholder="Enter your work email..."
-                  className="h-12 px-4 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm flex-1"
-                />
-                <Button type="submit" size="lg" className="h-12 px-6 font-bold shadow-md">
-                  Join waitlist
-                </Button>
-              </form>
-            )}
+            <Button href="/waitlist" size="lg" className="h-12 px-6 font-bold shadow-md">
+              Join the waitlist <ArrowRight className="h-4 w-4" />
+            </Button>
             <p className="text-xs text-slate-400 mt-3">
               Need a full team demo instead?{" "}
               <Link href="/demo" className="text-orange-400 hover:underline">
