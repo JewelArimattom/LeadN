@@ -8,7 +8,7 @@ plugins {
 
 val releaseApiBaseUrl = providers.gradleProperty("CALLPILOT_API_BASE_URL")
     .orElse(providers.environmentVariable("CALLPILOT_API_BASE_URL"))
-    .getOrElse("https://api.callpilot.app/api/v1")
+    .getOrElse("https://callpilot-api-main.onrender.com/api/v1")
     .replace("\\", "\\\\")
     .replace("\"", "\\\"")
 
