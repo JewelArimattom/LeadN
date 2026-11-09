@@ -80,13 +80,15 @@ data class CallRecordDto(
 )
 
 data class CreateCallRequest(
+    @SerializedName("client_call_id") val clientCallId: String? = null,
     @SerializedName("contact_id") val contactId: String? = null,
     @SerializedName("contact_name") val contactName: String,
     @SerializedName("phone_number") val phoneNumber: String,
     @SerializedName("call_type") val callType: String,
     val source: String = "MANUAL_LOGGED",
     @SerializedName("duration_seconds") val durationSeconds: Int = 0,
-    val notes: String? = null
+    val notes: String? = null,
+    val timestamp: String? = null
 )
 
 // Reminders

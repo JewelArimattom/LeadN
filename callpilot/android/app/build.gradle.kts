@@ -12,6 +12,12 @@ val releaseApiBaseUrl = providers.gradleProperty("CALLPILOT_API_BASE_URL")
     .replace("\\", "\\\\")
     .replace("\"", "\\\"")
 
+val debugApiBaseUrl = providers.gradleProperty("CALLPILOT_DEBUG_API_BASE_URL")
+    .orElse(providers.environmentVariable("CALLPILOT_DEBUG_API_BASE_URL"))
+    .getOrElse("http://10.0.2.2:8000/api/v1")
+    .replace("\\", "\\\\")
+    .replace("\"", "\\\"")
+
 android {
     namespace = "com.craftn.callpilot"
     compileSdk = 35
@@ -31,7 +37,7 @@ android {
         }
 
         // Build config for API URL
-        buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8000/api/v1\"")
+        buildConfigField("String", "API_BASE_URL", "\"$debugApiBaseUrl\"")
     }
 
     buildTypes {

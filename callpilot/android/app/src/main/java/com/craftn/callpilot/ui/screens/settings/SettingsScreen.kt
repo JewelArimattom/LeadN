@@ -1,5 +1,12 @@
 package com.craftn.callpilot.ui.screens.settings
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -28,6 +35,15 @@ fun SettingsScreen(
     onLoggedOut: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val callPrefs = remember { context.getSharedPreferences("callpilot_call_state", Context.MODE_PRIVATE) }
+    var autoCallLogging by remember {
+        mutableStateOf(callPrefs.getBoolean("enabled", false) && ContextCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED)
+    }
+    val callPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        autoCallLogging = granted
+        callPrefs.edit().putBoolean("enabled", granted).apply()
+    }
 
     Scaffold(
         topBar = {
@@ -95,6 +111,21 @@ fun SettingsScreen(
                         text = "AI & Automation",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                     )
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    SettingToggleRow(
+                        title = "Automatically log phone calls",
+                        subtitle = "Save incoming and outgoing call time, duration, and matching lead. No audio is recorded.",
+                        checked = autoCallLogging,
+                        onCheckedChange = { enabled ->
+                            if (enabled) callPermissionLauncher.launch(Manifest.permission.READ_PHONE_STATE)
+                            else {
+                                autoCallLogging = false
+                                callPrefs.edit().putBoolean("enabled", false).apply()
+                            }
+                        }
+                    )
+
                     Spacer(modifier = Modifier.height(14.dp))
 
                     SettingToggleRow(

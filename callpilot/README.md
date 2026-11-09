@@ -115,8 +115,9 @@ callpilot/
 ```bash
 cd backend
 
-# Configure backend/.env from backend/.env.example first. Keep API keys and
-# the Supabase database password private; the backend connects over TLS.
+# Configure backend/.env from backend/.env.example first. Use the same
+# MONGODB_URI and database name as the Lead N website, and copy the website's
+# JWT_SECRET into JWT_SECRET_KEY so both clients use the same account tokens.
 
 # Create virtual environment
 python -m venv venv
@@ -132,7 +133,9 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 The Android debug build uses `http://10.0.2.2:8000/api/v1` for an emulator.
 For a release build, set `CALLPILOT_API_BASE_URL` to the HTTPS URL of the
 deployed FastAPI service (or pass `-PCALLPILOT_API_BASE_URL=...` to Gradle).
-The Supabase project URL is a database service, not the FastAPI API URL.
+Mobile account, lead, call, note, reminder, and analytics data uses the same
+MongoDB database as the website. Audio processing and AI providers still run
+through the FastAPI service.
 
 Interactive API documentation will be available at:
 - Swagger UI: `http://localhost:8000/docs`

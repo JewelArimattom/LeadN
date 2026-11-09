@@ -45,12 +45,12 @@ class ProcessCallRecordingUseCase @Inject constructor(
     suspend operator fun invoke(callId: String, audioFile: File, contactName: String): Result<ConversationSummary> {
         return try {
             // 1. Upload audio / Transcribe
-            val transcript = aiRepository.transcribeAudio(audioFile)
+            val transcript = aiRepository.transcribeAudio(audioFile, callId = callId)
             val updatedTranscript = transcript.copy(callRecordId = callId)
             callRepository.saveTranscript(updatedTranscript)
 
             // 2. Generate AI Recap
-            val summary = aiRepository.generateRecap(updatedTranscript.fullText, contactName)
+            val summary = aiRepository.generateRecap(updatedTranscript.fullText, contactName, callId)
             val updatedSummary = summary.copy(callRecordId = callId)
             callRepository.saveSummary(updatedSummary)
 

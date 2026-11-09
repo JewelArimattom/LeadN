@@ -7,7 +7,7 @@ enum class CallType {
 }
 
 enum class CallSource {
-    AUTO_RECORDED, MANUAL_RECORDED, MANUAL_LOGGED
+    AUTO_RECORDED, AUTO_LOGGED, MANUAL_RECORDED, MANUAL_LOGGED
 }
 
 enum class ProcessingStatus {

@@ -55,6 +55,9 @@ interface CallRecordDao {
     @Query("SELECT * FROM call_records WHERE id = :id")
     suspend fun getCallById(id: String): CallRecordEntity?
 
+    @Query("SELECT * FROM call_records WHERE isSynced = 0 ORDER BY timestamp ASC")
+    suspend fun getUnsyncedCalls(): List<CallRecordEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCall(call: CallRecordEntity)
 

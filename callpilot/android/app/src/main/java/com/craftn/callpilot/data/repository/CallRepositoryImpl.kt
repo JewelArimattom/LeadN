@@ -19,6 +19,9 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
 import java.util.UUID
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -31,6 +34,9 @@ class CallRepositoryImpl @Inject constructor(
 ) : CallRepository {
 
     private val gson = Gson()
+    private val timestampFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
+        timeZone = TimeZone.getTimeZone("UTC")
+    }
 
     override fun getAllCalls(): Flow<List<CallRecord>> {
         return callDao.getAllCalls().map { entities -> entities.map { it.toDomain() } }
@@ -58,24 +64,45 @@ class CallRepositoryImpl @Inject constructor(
         callDao.insertCall(entity)
 
         try {
-            apiService.createCall(
+            val response = apiService.createCall(
                 CreateCallRequest(
+                    clientCallId = id,
                     contactId = call.contactId,
                     contactName = call.contactName,
                     phoneNumber = call.phoneNumber,
                     callType = call.callType.name,
                     source = call.source.name,
                     durationSeconds = call.durationSeconds,
-                    notes = call.summary
+                    notes = call.summary,
+                    timestamp = timestampFormat.format(call.timestamp)
                 )
             )
+            if (response.isSuccessful) callDao.updateCall(entity.copy(isSynced = true))
         } catch (_: Exception) {}
 
         return id
     }
 
     override suspend fun updateCall(call: CallRecord) {
-        callDao.updateCall(call.toEntity())
+        val entity = call.toEntity()
+        callDao.updateCall(entity)
+        try {
+            val response = apiService.updateCall(
+                call.id,
+                CreateCallRequest(
+                    clientCallId = call.id,
+                    contactId = call.contactId,
+                    contactName = call.contactName,
+                    phoneNumber = call.phoneNumber,
+                    callType = call.callType.name,
+                    source = call.source.name,
+                    durationSeconds = call.durationSeconds,
+                    notes = call.summary,
+                    timestamp = timestampFormat.format(call.timestamp)
+                )
+            )
+            if (response.isSuccessful) callDao.updateCall(entity.copy(isSynced = true))
+        } catch (_: Exception) {}
     }
 
     override suspend fun deleteCall(id: String) {
@@ -159,6 +186,22 @@ class CallRepositoryImpl @Inject constructor(
 
     override suspend fun syncCalls() {
         try {
+            callDao.getUnsyncedCalls().forEach { pending ->
+                val response = apiService.createCall(
+                    CreateCallRequest(
+                        clientCallId = pending.id,
+                        contactId = pending.contactId,
+                        contactName = pending.contactName,
+                        phoneNumber = pending.phoneNumber,
+                        callType = pending.callType,
+                        source = pending.source,
+                        durationSeconds = pending.durationSeconds,
+                        notes = pending.summary,
+                        timestamp = timestampFormat.format(pending.timestamp)
+                    )
+                )
+                if (response.isSuccessful) callDao.updateCall(pending.copy(isSynced = true))
+            }
             val response = apiService.getCalls()
             if (response.isSuccessful && response.body() != null) {
                 val remoteCalls = response.body()!!.map { dto ->
@@ -170,6 +213,7 @@ class CallRepositoryImpl @Inject constructor(
                         callType = dto.callType,
                         source = dto.source,
                         durationSeconds = dto.durationSeconds,
+                        timestamp = try { java.util.Date.from(java.time.Instant.parse(dto.timestamp)) } catch (_: Exception) { java.util.Date() },
                         recordingPath = dto.recordingPath,
                         hasRecording = dto.hasRecording,
                         processingStatus = dto.processingStatus,

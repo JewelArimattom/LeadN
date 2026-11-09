@@ -28,6 +28,16 @@ class SettingsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
+    init {
+        viewModelScope.launch {
+            preferencesManager.currentUser.collect { user ->
+                if (user != null) {
+                    _uiState.value = _uiState.value.copy(userEmail = user.email, userName = user.fullName)
+                }
+            }
+        }
+    }
+
     fun toggleAutoRecord(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(autoRecord = enabled)
         viewModelScope.launch {

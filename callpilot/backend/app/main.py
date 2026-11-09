@@ -20,7 +20,7 @@ from app.models.extras import (  # noqa: F401
 )
 
 # Import routers
-from app.routers import auth, contacts, calls, notes, reminders, ai, analytics
+from app.routers import auth, contacts, calls, notes, reminders, ai, analytics, shared
 
 
 @asynccontextmanager
@@ -30,14 +30,18 @@ async def lifespan(app: FastAPI):
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 
     # Initialize database tables
-    await init_db()
-    print("Database initialized")
+    if settings.MONGODB_URI:
+        print("Shared MongoDB mode enabled for website accounts, leads, and mobile call history")
+    else:
+        await init_db()
+        print("Legacy SQL database initialized")
     print(f"CallPilot API running on {settings.HOST}:{settings.PORT}")
 
     yield
 
     # Cleanup
-    await close_db()
+    if not settings.MONGODB_URI:
+        await close_db()
     print("Database connections closed")
 
 
@@ -67,6 +71,7 @@ app.include_router(notes.router, prefix="/api/v1")
 app.include_router(reminders.router, prefix="/api/v1")
 app.include_router(ai.router, prefix="/api/v1")
 app.include_router(analytics.router, prefix="/api/v1")
+app.include_router(shared.router, prefix="/api/v1")
 
 
 @app.get("/")

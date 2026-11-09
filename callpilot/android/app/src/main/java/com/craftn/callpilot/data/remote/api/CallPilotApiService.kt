@@ -9,40 +9,43 @@ import retrofit2.http.*
 interface CallPilotApiService {
 
     // Auth
-    @POST("auth/login")
+    @POST("shared/auth/login")
     suspend fun login(@Body request: LoginRequest): Response<AuthResponse>
 
-    @POST("auth/register")
+    @POST("shared/auth/register")
     suspend fun register(@Body request: RegisterRequest): Response<AuthResponse>
 
-    @GET("auth/me")
+    @GET("shared/auth/me")
     suspend fun getProfile(): Response<UserDto>
 
     // Contacts
-    @GET("contacts")
+    @GET("shared/leads")
     suspend fun getContacts(): Response<List<ContactDto>>
 
-    @GET("contacts/{id}")
+    @GET("shared/leads/{id}")
     suspend fun getContact(@Path("id") id: String): Response<ContactDto>
 
-    @POST("contacts")
+    @POST("shared/leads")
     suspend fun createContact(@Body request: CreateContactRequest): Response<ContactDto>
 
-    @PUT("contacts/{id}")
+    @PUT("shared/leads/{id}")
     suspend fun updateContact(@Path("id") id: String, @Body request: CreateContactRequest): Response<ContactDto>
 
-    @DELETE("contacts/{id}")
+    @DELETE("shared/leads/{id}")
     suspend fun deleteContact(@Path("id") id: String): Response<Unit>
 
     // Calls
-    @GET("calls")
+    @GET("shared/calls")
     suspend fun getCalls(): Response<List<CallRecordDto>>
 
-    @GET("calls/{id}")
+    @GET("shared/calls/{id}")
     suspend fun getCall(@Path("id") id: String): Response<CallRecordDto>
 
-    @POST("calls")
+    @POST("shared/calls")
     suspend fun createCall(@Body request: CreateCallRequest): Response<CallRecordDto>
+
+    @PATCH("shared/calls/{id}")
+    suspend fun updateCall(@Path("id") id: String, @Body request: CreateCallRequest): Response<CallRecordDto>
 
     @Multipart
     @POST("calls/{id}/recording")
@@ -53,51 +56,52 @@ interface CallPilotApiService {
 
     // AI & Transcription
     @Multipart
-    @POST("ai/transcribe")
+    @POST("shared/ai/transcribe")
     suspend fun transcribeAudio(
         @Part audio: MultipartBody.Part,
-        @Part("language") language: RequestBody? = null
+        @Part("language") language: RequestBody? = null,
+        @Part("call_id") callId: RequestBody? = null
     ): Response<TranscriptResponseDto>
 
-    @POST("ai/recap")
+    @POST("shared/ai/recap")
     suspend fun generateRecap(
         @Body request: Map<String, String>
     ): Response<RecapResponseDto>
 
-    @POST("ai/follow-up")
+    @POST("shared/ai/follow-up")
     suspend fun generateFollowUp(
         @Body request: FollowUpRequest
     ): Response<FollowUpResponse>
 
-    @POST("ai/assistant")
+    @POST("shared/ai/assistant")
     suspend fun askAssistant(
         @Body request: AssistantChatRequest
     ): Response<AssistantChatResponse>
 
     // Reminders
-    @GET("reminders")
+    @GET("shared/reminders")
     suspend fun getReminders(): Response<List<ReminderDto>>
 
-    @POST("reminders")
+    @POST("shared/reminders")
     suspend fun createReminder(@Body request: CreateReminderRequest): Response<ReminderDto>
 
-    @PUT("reminders/{id}/complete")
+    @PUT("shared/reminders/{id}/complete")
     suspend fun completeReminder(@Path("id") id: String): Response<ReminderDto>
 
-    @DELETE("reminders/{id}")
+    @DELETE("shared/reminders/{id}")
     suspend fun deleteReminder(@Path("id") id: String): Response<Unit>
 
     // Notes
-    @GET("notes")
+    @GET("shared/notes")
     suspend fun getNotes(): Response<List<NoteDto>>
 
-    @POST("notes")
+    @POST("shared/notes")
     suspend fun createNote(@Body request: CreateNoteRequest): Response<NoteDto>
 
-    @DELETE("notes/{id}")
+    @DELETE("shared/notes/{id}")
     suspend fun deleteNote(@Path("id") id: String): Response<Unit>
 
     // Analytics
-    @GET("analytics/summary")
+    @GET("shared/analytics/summary")
     suspend fun getAnalytics(): Response<AnalyticsResponseDto>
 }

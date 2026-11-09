@@ -9,9 +9,11 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://callpilot:password@localhost:5432/callpilot_db"
+    MONGODB_URI: Optional[str] = None
+    MONGODB_DATABASE: str = "leadn"
 
     # JWT
-    JWT_SECRET_KEY: str = "change-me-in-production"
+    JWT_SECRET_KEY: str = "leadn-secret-super-secure-key-2026-fallback"
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7

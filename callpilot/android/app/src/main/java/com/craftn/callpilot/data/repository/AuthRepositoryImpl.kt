@@ -1,5 +1,13 @@
 package com.craftn.callpilot.data.repository
 
+import android.content.Context
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.craftn.callpilot.data.local.datastore.UserPreferencesManager
 import com.craftn.callpilot.data.remote.api.CallPilotApiService
 import com.craftn.callpilot.data.remote.dto.LoginRequest
@@ -7,29 +15,24 @@ import com.craftn.callpilot.data.remote.dto.RegisterRequest
 import com.craftn.callpilot.domain.model.AuthToken
 import com.craftn.callpilot.domain.model.User
 import com.craftn.callpilot.domain.repository.AuthRepository
+import com.craftn.callpilot.service.sync.SyncWorker
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
     private val apiService: CallPilotApiService,
-    private val preferencesManager: UserPreferencesManager
+    private val preferencesManager: UserPreferencesManager,
+    @ApplicationContext private val context: Context
 ) : AuthRepository {
 
     override fun getCurrentUser(): Flow<User?> {
-        return preferencesManager.accessToken.map { token ->
-            if (token != null) {
-                User(
-                    id = "local_user_1",
-                    email = "demo@craftn.ai",
-                    fullName = "Demo User",
-                    company = "CraftN"
-                )
-            } else null
-        }
+        return preferencesManager.currentUser
     }
 
     override fun isLoggedIn(): Flow<Boolean> {
@@ -57,27 +60,10 @@ class AuthRepositoryImpl @Inject constructor(
                 saveAuthData(token, user)
                 Result.success(user)
             } else {
-                // If offline or local testing, provide quick fallback login for seamless experience
-                val mockUser = User(
-                    id = "demo_user_id",
-                    email = email,
-                    fullName = email.substringBefore("@").replaceFirstChar { it.uppercase() },
-                    company = "CraftN Suite"
-                )
-                val mockToken = AuthToken("mock_jwt_access_token", "mock_jwt_refresh_token")
-                saveAuthData(mockToken, mockUser)
-                Result.success(mockUser)
+                Result.failure(IllegalStateException(response.errorBody()?.string() ?: "Unable to sign in"))
             }
         } catch (e: Exception) {
-            val mockUser = User(
-                id = "demo_user_id",
-                email = email,
-                fullName = email.substringBefore("@").replaceFirstChar { it.uppercase() },
-                company = "CraftN Suite"
-            )
-            val mockToken = AuthToken("mock_jwt_access_token", "mock_jwt_refresh_token")
-            saveAuthData(mockToken, mockUser)
-            Result.success(mockUser)
+            Result.failure(e)
         }
     }
 
@@ -104,16 +90,10 @@ class AuthRepositoryImpl @Inject constructor(
                 saveAuthData(token, user)
                 Result.success(user)
             } else {
-                val mockUser = User(id = "new_user_id", email = email, fullName = name, company = company)
-                val mockToken = AuthToken("mock_jwt_access_token", "mock_jwt_refresh_token")
-                saveAuthData(mockToken, mockUser)
-                Result.success(mockUser)
+                Result.failure(IllegalStateException(response.errorBody()?.string() ?: "Unable to create account"))
             }
         } catch (e: Exception) {
-            val mockUser = User(id = "new_user_id", email = email, fullName = name, company = company)
-            val mockToken = AuthToken("mock_jwt_access_token", "mock_jwt_refresh_token")
-            saveAuthData(mockToken, mockUser)
-            Result.success(mockUser)
+            Result.failure(e)
         }
     }
 
@@ -128,5 +108,13 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun saveAuthData(token: AuthToken, user: User) {
         preferencesManager.saveAuthToken(token.accessToken, token.refreshToken)
         preferencesManager.saveUserData(user.id, user.email, user.fullName, user.company)
+        val constraints = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
+        val oneTime = OneTimeWorkRequestBuilder<SyncWorker>().setConstraints(constraints).build()
+        val periodic = PeriodicWorkRequestBuilder<SyncWorker>(15, TimeUnit.MINUTES)
+            .setConstraints(constraints).build()
+        WorkManager.getInstance(context).enqueueUniqueWork("callpilot_initial_sync", ExistingWorkPolicy.REPLACE, oneTime)
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            "callpilot_periodic_sync", ExistingPeriodicWorkPolicy.KEEP, periodic
+        )
     }
 }

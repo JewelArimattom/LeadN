@@ -5,6 +5,7 @@ import {
   BellRing,
   BrainCircuit,
   Check,
+  Download,
   FileAudio,
   MessageSquareText,
   ShieldCheck,
@@ -74,13 +75,17 @@ export default function CallPilotPage() {
               and reminders into one Android companion for your workday.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Button size="lg" href="/waitlist">
-                Get CallPilot updates
+              <Button size="lg" href="/downloads/callpilot.apk" className="gap-2">
+                <Download className="h-4 w-4" />
+                Download for Android
               </Button>
               <Button size="lg" variant="outline" href="/#how-it-works">
                 Explore Lead N CRM
               </Button>
             </div>
+            <p className="text-xs text-slate-500">
+              Android 10 or newer. Sign in with your Lead N account to sync leads and call history.
+            </p>
             <p className="text-xs text-slate-500">
               AI processing requires an account connection and an enabled provider.
               Always follow local recording and privacy requirements.
@@ -171,7 +176,9 @@ export default function CallPilotPage() {
               history, and team visibility in Lead N CRM.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <Button href="/waitlist">Get product updates</Button>
+              <Button href="/downloads/callpilot.apk" className="gap-2">
+                <Download className="h-4 w-4" /> Download CallPilot
+              </Button>
               <Link
                 href="/features"
                 className="inline-flex h-10 items-center rounded-lg px-4 text-sm font-semibold text-orange-700 hover:bg-orange-100"

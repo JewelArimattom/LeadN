@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
+import com.craftn.callpilot.domain.model.User
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -40,6 +41,18 @@ class UserPreferencesManager @Inject constructor(
         .map { preferences -> preferences[KEY_ACCESS_TOKEN] }
 
     val isLoggedIn: Flow<Boolean> = accessToken.map { !it.isNullOrBlank() }
+
+    val currentUser: Flow<User?> = context.dataStore.data
+        .catch { exception -> if (exception is IOException) emit(emptyPreferences()) else throw exception }
+        .map { preferences ->
+            val token = preferences[KEY_ACCESS_TOKEN]
+            if (token.isNullOrBlank()) null else User(
+                id = preferences[KEY_USER_ID].orEmpty(),
+                email = preferences[KEY_USER_EMAIL].orEmpty(),
+                fullName = preferences[KEY_USER_NAME].orEmpty(),
+                company = preferences[KEY_USER_COMPANY]
+            )
+        }
 
     val isOnboardingCompleted: Flow<Boolean> = context.dataStore.data
         .catch { exception ->

@@ -52,7 +52,7 @@ class ContactRepositoryImpl @Inject constructor(
 
         // Try syncing to backend
         try {
-            apiService.createContact(
+            val response = apiService.createContact(
                 CreateContactRequest(
                     name = contact.name,
                     phoneNumber = contact.phoneNumber,
@@ -62,6 +62,15 @@ class ContactRepositoryImpl @Inject constructor(
                     tags = contact.tags
                 )
             )
+            if (response.isSuccessful) {
+                val remoteId = response.body()?.id
+                if (!remoteId.isNullOrBlank() && remoteId != id) {
+                    contactDao.deleteContact(id)
+                    contactDao.insertContact(entity.copy(id = remoteId, isSynced = true))
+                    return remoteId
+                }
+                contactDao.updateContact(entity.copy(isSynced = true))
+            }
         } catch (_: Exception) {
             // Keep local offline copy
         }
