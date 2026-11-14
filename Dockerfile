@@ -1,31 +1,15 @@
-FROM node:22-alpine AS dependencies
+# Compatibility gateway image for the legacy Render Docker service.
+# Render builds this Dockerfile with callpilot/backend as its build context.
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
-COPY package.json package-lock.json ./
-# Reconcile the committed lockfile with package.json during the image build.
-RUN npm install --no-audit --no-fund
+COPY proxy_requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+COPY proxy_app.py ./proxy_app.py
 
-FROM dependencies AS builder
-
-WORKDIR /app
-COPY . .
-ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build
-
-FROM node:22-alpine AS runner
-
-WORKDIR /app
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV HOSTNAME=0.0.0.0
-
-RUN addgroup --system --gid 1001 nodejs \
-    && adduser --system --uid 1001 nextjs
-
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-USER nextjs
-EXPOSE 3000
-CMD ["node", "server.js"]
+EXPOSE 8000
+CMD ["sh", "-c", "uvicorn proxy_app:app --host 0.0.0.0 --port ${PORT:-8000}"]
