@@ -12,7 +12,7 @@ export function Logo({ className }: LogoProps) {
       aria-label="Lead N — Home"
     >
       {/* Logo mark */}
-      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--primary)] text-white text-sm font-extrabold shadow-md">
+      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--primary)] text-white text-sm font-extrabold">
         LN
       </span>
       <span>

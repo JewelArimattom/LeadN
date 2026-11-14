@@ -2,7 +2,7 @@ export const siteConfig = {
   name: "Lead N",
   tagline: "Know exactly who to call next.",
   description:
-    "Lead N helps sales teams track who they've called, who's left to call, and every follow-up — so no lead slips through.",
+    "Lead N helps sales teams organize enquiries, prioritize calls, record outcomes, and keep follow-ups visible.",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://leadn.com",
   company: {
     name: "Anet Labs",

@@ -8,7 +8,7 @@ export function FAQAccordion() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const toggle = (idx: number) => {
-    setOpenIndex(openIndex === idx ? null : idx);
+    setOpenIndex((current) => current === idx ? null : idx);
   };
 
   return (
@@ -17,11 +17,14 @@ export function FAQAccordion() {
         const isOpen = openIndex === idx;
         return (
           <div
-            key={idx}
+            key={item.question}
             className="rounded-xl border border-slate-200 bg-white transition-all overflow-hidden"
           >
             <button
+              type="button"
               onClick={() => toggle(idx)}
+              id={`faq-trigger-${idx}`}
+              aria-controls={`faq-panel-${idx}`}
               aria-expanded={isOpen}
               className="w-full flex items-center justify-between p-4 sm:p-5 text-left hover:bg-slate-50/50 transition-colors"
             >
@@ -34,11 +37,9 @@ export function FAQAccordion() {
                 }`}
               />
             </button>
-            {isOpen && (
-              <div className="px-4 pb-5 sm:px-5 pt-0 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100">
+            <div id={`faq-panel-${idx}`} role="region" aria-labelledby={`faq-trigger-${idx}`} hidden={!isOpen} className="px-4 pb-5 sm:px-5 pt-0 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100">
                 <p className="pt-3">{item.answer}</p>
-              </div>
-            )}
+            </div>
           </div>
         );
       })}

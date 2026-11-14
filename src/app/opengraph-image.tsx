@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Lead N — Cold Calling CRM for Sales Teams";
+export const alt = "Lead N — Lead Management for Sales Teams";
 export const size = {
   width: 1200,
   height: 630,
@@ -57,18 +57,18 @@ export default function Image() {
               letterSpacing: -2,
             }}
           >
-            Know exactly who to call next.
+            Lead management for sales teams.
           </div>
           <div style={{ fontSize: 26, color: "#64748B", lineHeight: 1.4, maxWidth: 840 }}>
-            Cold-calling CRM for sales teams. Smart queue, one-tap outcome logging, duplicate detection, and automated WhatsApp follow-ups.
+            Import enquiries, prioritize calls, record outcomes, and keep follow-ups visible to your team.
           </div>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 32, fontSize: 18, color: "#475569" }}>
-          <span>✓ India-first, Global-ready</span>
-          <span>✓ One-tap Outcome Logging</span>
-          <span>✓ Bulk WhatsApp & SMS</span>
-          <span>✓ Anet Labs</span>
+          <span>CSV and Excel import</span>
+          <span>One-tap outcomes</span>
+          <span>Callback reminders</span>
+          <span>Starter from ₹499 / user / month</span>
         </div>
       </div>
     ),

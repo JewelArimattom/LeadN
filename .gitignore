@@ -48,3 +48,5 @@ atlas-credentials*.env
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+/.agents
+/.taste-skill
