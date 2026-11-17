@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { ArrowDownRight, ArrowRight, Check, CheckCheck, Clock3, Inbox, ListChecks, PhoneCall, Upload } from "lucide-react";
+import { ArrowDownRight, ArrowRight, Check, Clock3, ListChecks, Upload } from "lucide-react";
 import { pricingPlans } from "@/config/pricing";
 import { Button } from "@/components/ui/button";
 import { HeroProductMockup } from "@/components/mockups/hero-mockup";
 import { FAQAccordion } from "@/components/sections/faq-accordion";
+import { VoiceCallVisual } from "@/components/sections/voice-call-visual";
 
 const workflow = [
   {
@@ -53,15 +54,16 @@ export default function HomePage() {
         aria-labelledby="home-title"
         data-enter
         className="home-hero home-hero-product"
+        data-nav-surface="dark"
       >
         <div className="container-tight home-hero-inner">
           <div className="home-hero-layout">
+            <div className="home-hero-visual">
+              <VoiceCallVisual />
+            </div>
             <div className="home-hero-copy">
-              <h1 id="home-title">Every lead has a <span>next move.</span></h1>
-              <p className="home-hero-description">
-                Lead N is a shared lead management workspace for sales teams. Keep enquiries, call outcomes, and follow-ups together—so everyone knows which conversation comes next.
-              </p>
-              <div className="home-hero-conversion">
+              <h1 id="home-title">Every lead has a <em>next move.</em></h1>
+              <div className="home-hero-detail-row">
                 <div className="home-hero-actions">
                   <Button size="lg" href="/waitlist" className="home-primary-cta">
                     Join the waitlist <ArrowRight aria-hidden="true" className="h-4 w-4" />
@@ -70,33 +72,10 @@ export default function HomePage() {
                     Follow a lead into the demo <ArrowDownRight aria-hidden="true" className="h-4 w-4" />
                   </Link>
                 </div>
-                <div className="home-price-note">
-                  <span className="home-price-label">Plans from</span>
-                  <span className="home-price">₹499 <small>per user / month</small></span>
-                </div>
-              </div>
-            </div>
-            <div className="home-hero-flow" role="group" aria-label="A lead moves from a new enquiry to a call and a recorded outcome">
-              <div className="home-hero-flow-heading"><strong>One clear next step.</strong></div>
-              <article className="home-hero-lead" aria-label="Lead LN-2048, 3-bedroom home enquiry, callback due now">
-                <span className="home-hero-lead-mark">3</span>
-                <span className="home-hero-lead-copy"><strong>3-bedroom home enquiry</strong><small>LN-2048 · Westside Residences</small></span>
-                <span className="home-hero-lead-state"><i /> Callback due</span>
-              </article>
-              <div className="home-hero-flow-track">
-                <div className="home-hero-flow-step">
-                  <span className="home-hero-flow-icon"><Inbox aria-hidden="true" /></span>
-                  <span className="home-hero-flow-label">New enquiry</span>
-                </div>
-                <span className="home-hero-flow-connector" aria-hidden="true"><i /></span>
-                <div className="home-hero-flow-step">
-                  <span className="home-hero-flow-icon"><PhoneCall aria-hidden="true" /></span>
-                  <span className="home-hero-flow-label">Call due</span>
-                </div>
-                <span className="home-hero-flow-connector" aria-hidden="true"><i /></span>
-                <div className="home-hero-flow-step">
-                  <span className="home-hero-flow-icon"><CheckCheck aria-hidden="true" /></span>
-                  <span className="home-hero-flow-label">Outcome logged</span>
+                <div className="home-hero-support">
+                  <p className="home-hero-description">
+                    Import CSV or Excel leads, work the call queue, and keep each follow-up with its conversation.
+                  </p>
                 </div>
               </div>
             </div>
@@ -204,9 +183,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="home-close" aria-labelledby="close-title">
+      <section className="home-close" aria-labelledby="close-title" data-nav-surface="dark">
         <div className="container-tight home-close-inner">
-          <div><h2 id="close-title">Give every enquiry a place to go.</h2><p>Keep the context, the call, and the follow-up together.</p></div>
+          <div><h2 id="close-title">Keep calls and follow-ups in one shared queue.</h2><p>Assign a next step and keep conversation history visible to your team.</p></div>
           <Button size="lg" href="/waitlist">Join the waitlist <ArrowRight aria-hidden="true" className="h-4 w-4" /></Button>
         </div>
       </section>

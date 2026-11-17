@@ -9,9 +9,37 @@ import { mainNav } from "@/config/nav";
 import { Logo } from "@/components/ui/logo";
 import { Button } from "@/components/ui/button";
 
+type NavTone = "light" | "dark";
+
+function getSurfaceTone(): NavTone {
+  const header = document.querySelector<HTMLElement>(".site-header");
+  const sampleY = Math.min(window.innerHeight - 1, (header?.getBoundingClientRect().height ?? 64) + 2);
+  const underHeader = document.elementFromPoint(Math.floor(window.innerWidth / 2), sampleY) as HTMLElement | null;
+  const section = underHeader?.closest<HTMLElement>("[data-nav-surface], section, footer");
+  const declaredTone = section?.dataset.navSurface;
+  if (declaredTone === "dark" || declaredTone === "light") return declaredTone;
+  if (section?.matches(".site-footer")) return "dark";
+
+  let current: HTMLElement | null = underHeader;
+  while (current) {
+    const color = window.getComputedStyle(current).backgroundColor;
+    const channels = color.match(/[\d.]+/g)?.map(Number);
+    if (channels && channels.length >= 3 && (channels[3] === undefined || channels[3] > 0.05)) {
+      const [red, green, blue] = channels;
+      const luminance = (0.2126 * red + 0.7152 * green + 0.0722 * blue) / 255;
+      return luminance > 0.44 ? "light" : "dark";
+    }
+    current = current.parentElement;
+  }
+
+  return "light";
+}
+
 export function Navbar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [navTone, setNavTone] = useState<NavTone>("light");
   const reduceMotion = useReducedMotion();
 
   useEffect(() => {
@@ -25,13 +53,35 @@ export function Navbar() {
     };
   }, [mobileOpen]);
 
+  useEffect(() => {
+    let frame = 0;
+    const updateScrollState = () => {
+      frame = 0;
+      const scrolled = window.scrollY > 24;
+      setIsScrolled(scrolled);
+      if (scrolled) setNavTone(getSurfaceTone());
+    };
+    const scheduleUpdate = () => {
+      if (!frame) frame = window.requestAnimationFrame(updateScrollState);
+    };
+
+    updateScrollState();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+    return () => {
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, [pathname]);
+
   if (pathname && pathname.startsWith("/dashboard")) {
     return null;
   }
 
   return (
     <header
-      className="site-header fixed top-0 left-0 right-0 z-50 bg-white border-b border-slate-200"
+      className={`site-header fixed top-0 left-0 right-0 z-50 bg-white border-b border-slate-200${pathname === "/" ? " site-header-home" : ""}${pathname === "/" && !isScrolled ? " site-header-at-top" : ""}${isScrolled ? ` site-header-scrolled site-header-tone-${navTone}` : ""}`}
       onKeyDown={(event) => {
         if (event.key === "Escape") setMobileOpen(false);
       }}

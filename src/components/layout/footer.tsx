@@ -24,7 +24,7 @@ export function Footer() {
   }
 
   return (
-    <footer className="site-footer">
+    <footer className={`site-footer${pathname === "/" ? " site-footer-home" : ""}`}>
       <div className="container-tight site-footer-inner">
         <div className="site-footer-main">
           <div className="site-footer-brand">
@@ -97,7 +97,7 @@ export function Footer() {
 
         <div className="site-footer-bottom">
           <p>
-            &copy;{currentYear ? ` ${currentYear}` : ""} {siteConfig.company.name} ({siteConfig.company.brand}). All rights reserved.
+            &copy;{currentYear ? ` ${currentYear}` : ""} {siteConfig.name}, by {siteConfig.company.name}. All rights reserved.
           </p>
           <p>Lead management for sales teams.</p>
         </div>
