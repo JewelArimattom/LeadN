@@ -130,9 +130,11 @@ pip install -r requirements.txt
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-The Android debug build uses `http://10.0.2.2:8000/api/v1` for an emulator.
-For a release build, set `CALLPILOT_API_BASE_URL` to the HTTPS URL of the
-deployed FastAPI service (or pass `-PCALLPILOT_API_BASE_URL=...` to Gradle).
+The Android debug and release builds default to the deployed API at
+`https://callpilot-api-main.onrender.com/api/v1`. For local backend development,
+override the debug URL with `CALLPILOT_DEBUG_API_BASE_URL=http://10.0.2.2:8000/api/v1`
+(or pass `-PCALLPILOT_DEBUG_API_BASE_URL=...` to Gradle). For a different release
+backend, set `CALLPILOT_API_BASE_URL` or pass `-PCALLPILOT_API_BASE_URL=...`.
 Mobile account, lead, call, note, reminder, and analytics data uses the same
 MongoDB database as the website. Audio processing and AI providers still run
 through the FastAPI service.
@@ -147,7 +149,7 @@ Interactive API documentation will be available at:
 2. Select **Open Project** and navigate to `c:\My\lead N\callpilot\android`.
 3. Allow Gradle to sync dependencies.
 4. Run on an Android Emulator or connected physical device (API level 29+).
-5. For local backend communication with an Android emulator, the app is preconfigured to route to `http://10.0.2.2:8000/api/v1/`.
+5. The app uses the deployed HTTPS API by default. To use a local backend from an Android emulator, set `CALLPILOT_DEBUG_API_BASE_URL` to `http://10.0.2.2:8000/api/v1` when building.
 
 ---
 
