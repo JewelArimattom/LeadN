@@ -139,15 +139,8 @@ class AiRepositoryImpl @Inject constructor(
             }
         } catch (_: Exception) {}
 
-        return AnalyticsSummary(
-            totalCalls = 28,
-            totalDurationMinutes = 345,
-            callsThisWeek = 12,
-            remindersPending = 4,
-            completedReminders = 18,
-            highInterestLeads = 7,
-            sentimentBreakdown = mapOf("Positive" to 65, "Neutral" to 25, "Negative" to 10),
-            callFrequencyByDay = mapOf("Mon" to 4, "Tue" to 7, "Wed" to 5, "Thu" to 8, "Fri" to 4)
-        )
+        // Do not show fabricated sample metrics when the API is unavailable or the
+        // user is signed out. The dashboard can then represent the actual local state.
+        return AnalyticsSummary()
     }
 }

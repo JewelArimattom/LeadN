@@ -60,7 +60,7 @@ class ProcessCallRecordingUseCaseTest {
         )
 
         coEvery { aiRepository.transcribeAudio(any(), any()) } returns mockTranscript
-        coEvery { aiRepository.generateRecap(any(), any()) } returns mockSummary
+        coEvery { aiRepository.generateRecap(any(), any(), any()) } returns mockSummary
         coEvery { callRepository.getCallById(callId) } returns CallRecord(
             id = callId,
             contactName = "Sarah Jenkins",
