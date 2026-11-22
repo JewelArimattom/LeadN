@@ -3,6 +3,7 @@ package com.craftn.callpilot.ui.navigation
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -49,10 +50,20 @@ fun NavGraph(
     preferencesManager: UserPreferencesManager,
     callRepository: CallRepository,
     contactRepository: ContactRepository,
-    aiRepository: AiRepository
+    aiRepository: AiRepository,
+    openRecorderFromCall: Boolean = false,
+    incomingCallerNumber: String = "",
+    onRecorderIntentHandled: () -> Unit = {}
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
+    LaunchedEffect(currentRoute, openRecorderFromCall, incomingCallerNumber) {
+        if (openRecorderFromCall && currentRoute == Screen.Home.route) {
+            navController.navigate(Screen.Recording.createRoute("", incomingCallerNumber, "INCOMING"))
+            onRecorderIntentHandled()
+        }
+    }
 
     // Show bottom bar only on the 5 core main tabs
     val showBottomBar = currentRoute in BottomNavItems.map { it.route }
@@ -134,7 +145,7 @@ fun NavGraph(
                 val homeViewModel: HomeViewModel = hiltViewModel()
                 HomeScreen(
                     viewModel = homeViewModel,
-                    onNavigateToRecording = { navController.navigate(Screen.Recording.route) },
+                    onNavigateToRecording = { navController.navigate(Screen.Recording.createRoute()) },
                     onNavigateToLogCall = { navController.navigate(Screen.LogCall.route) },
                     onNavigateToAddReminder = { navController.navigate(Screen.AddReminder.route) },
                     onNavigateToCalls = { navController.navigate(Screen.Calls.route) },
@@ -176,10 +187,20 @@ fun NavGraph(
                 )
             }
 
-            composable(Screen.Recording.route) {
+            composable(
+                route = Screen.Recording.route,
+                arguments = listOf(
+                    navArgument("contactName") { type = NavType.StringType; defaultValue = "" },
+                    navArgument("phoneNumber") { type = NavType.StringType; defaultValue = "" },
+                    navArgument("callType") { type = NavType.StringType; defaultValue = "OUTGOING" }
+                )
+            ) { backStackEntry ->
                 val recordingViewModel: RecordingViewModel = hiltViewModel()
                 RecordingScreen(
                     viewModel = recordingViewModel,
+                    initialContactName = backStackEntry.arguments?.getString("contactName").orEmpty(),
+                    initialPhoneNumber = backStackEntry.arguments?.getString("phoneNumber").orEmpty(),
+                    initialCallType = backStackEntry.arguments?.getString("callType") ?: "OUTGOING",
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToRecap = { callId ->
                         navController.navigate(Screen.Recap.createRoute(callId)) {

@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     # AI Providers
     OPENAI_API_KEY: Optional[str] = None
     GEMINI_API_KEY: Optional[str] = None
-    DEFAULT_AI_PROVIDER: str = "openai"  # openai | gemini | local
+    DEFAULT_AI_PROVIDER: str = "gemini"  # gemini | openai | local
 
     # File Storage
     UPLOAD_DIR: str = "./uploads"

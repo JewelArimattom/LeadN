@@ -75,6 +75,10 @@
             android:name=".service.notification.NotificationActionReceiver"
             android:exported="false" />
 
+        <receiver
+            android:name=".service.notification.CallConsentDismissReceiver"
+            android:exported="false" />
+
         <!-- WorkManager Initializer -->
         <provider
             android:name="androidx.startup.InitializationProvider"

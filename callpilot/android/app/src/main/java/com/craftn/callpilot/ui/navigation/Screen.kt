@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.vector.ImageVector
+import android.net.Uri
 
 sealed class Screen(val route: String, val title: String = "", val icon: ImageVector? = null) {
     object Splash : Screen("splash")
@@ -23,7 +24,10 @@ sealed class Screen(val route: String, val title: String = "", val icon: ImageVe
         fun createRoute(callId: String) = "call_detail/$callId"
     }
     object LogCall : Screen("log_call")
-    object Recording : Screen("recording")
+    object Recording : Screen("recording?contactName={contactName}&phoneNumber={phoneNumber}&callType={callType}") {
+        fun createRoute(contactName: String = "", phoneNumber: String = "", callType: String = "OUTGOING") =
+            "recording?contactName=${Uri.encode(contactName)}&phoneNumber=${Uri.encode(phoneNumber)}&callType=${Uri.encode(callType)}"
+    }
     object ContactDetail : Screen("contact_detail/{contactId}") {
         fun createRoute(contactId: String) = "contact_detail/$contactId"
     }

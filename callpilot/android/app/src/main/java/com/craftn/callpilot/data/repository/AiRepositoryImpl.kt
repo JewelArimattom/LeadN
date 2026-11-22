@@ -10,8 +10,10 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
-import java.text.SimpleDateFormat
 import java.util.*
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -20,9 +22,10 @@ class AiRepositoryImpl @Inject constructor(
     private val apiService: CallPilotApiService
 ) : AiRepository {
 
-    private val isoFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
-        timeZone = TimeZone.getTimeZone("UTC")
-    }
+    private fun parseIsoDate(value: String): Date? =
+        runCatching { Date.from(Instant.parse(value)) }.getOrElse {
+            runCatching { Date.from(LocalDate.parse(value).atStartOfDay(ZoneOffset.UTC).toInstant()) }.getOrNull()
+        }
 
     override suspend fun transcribeAudio(audioFile: File, language: String?, callId: String?): Transcript {
         val requestFile = audioFile.asRequestBody("audio/m4a".toMediaTypeOrNull())
@@ -69,9 +72,7 @@ class AiRepositoryImpl @Inject constructor(
                     keyPoints = dto.keyPoints,
                     clientCommitments = dto.clientCommitments,
                     userCommitments = dto.userCommitments,
-                    suggestedFollowUpDate = dto.suggestedFollowUpDate?.let {
-                        try { isoFormat.parse(it) } catch (_: Exception) { null }
-                    },
+                    suggestedFollowUpDate = dto.suggestedFollowUpDate?.let(::parseIsoDate),
                     sentimentScore = dto.sentimentScore,
                     sentimentLabel = dto.sentimentLabel,
                     clientInterestLevel = dto.clientInterestLevel,
@@ -81,7 +82,7 @@ class AiRepositoryImpl @Inject constructor(
                             id = item.id,
                             task = item.task,
                             assignee = item.assignee,
-                            deadline = item.deadline?.let { try { isoFormat.parse(it) } catch (_: Exception) { null } },
+                            deadline = item.deadline?.let(::parseIsoDate),
                             isCompleted = item.isCompleted,
                             priority = try { ReminderPriority.valueOf(item.priority) } catch (_: Exception) { ReminderPriority.MEDIUM }
                         )

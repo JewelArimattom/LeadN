@@ -42,6 +42,16 @@ def _json(value: Any):
     return value
 
 
+def _parse_optional_datetime(value: Any) -> datetime | None:
+    if not isinstance(value, str) or not value.strip():
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.strip().replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return parsed.replace(tzinfo=timezone.utc) if parsed.tzinfo is None else parsed
+
+
 def _user_doc(user):
     return {"id": str(user["_id"]), "email": user["email"],
             "full_name": user.get("name", ""), "company": user.get("companyName"),
@@ -401,9 +411,11 @@ async def generate_recap(data: dict, user=Depends(current_user)):
     actions = [{"id": str(index), "task": item.get("title", ""), "assignee": item.get("assignee"),
                 "deadline": item.get("deadline"), "priority": str(item.get("priority", "medium")).upper()}
                for index, item in enumerate(result.get("actions", []))]
+    follow_up_date = _parse_optional_datetime(result.get("suggested_follow_up_date"))
     call_id = data.get("call_id", "")
     response = {"call_id": call_id, "quick_recap": result.get("summary_text", ""),
                 "key_points": result.get("next_steps", []),
+                "important_details": result.get("important_details", {}),
                 "client_commitments": result.get("client_commitments", []),
                 "user_commitments": result.get("user_commitments", []),
                 "suggested_follow_up_date": result.get("suggested_follow_up_date"),
@@ -416,13 +428,21 @@ async def generate_recap(data: dict, user=Depends(current_user)):
         saved = db.mobile_calls.find_one(query)
         db.mobile_calls.update_one(query, {"$set": {"summary": response["quick_recap"],
                                     "key_points": response["key_points"],
+                                    "important_details": response["important_details"],
+                                    "client_commitments": response["client_commitments"],
+                                    "user_commitments": response["user_commitments"],
                                     "action_items": [item["task"] for item in actions],
+                                    "action_items_detailed": actions,
+                                    "suggested_follow_up_date": follow_up_date,
                                     "sentiment": label, "client_interest_level": interest,
                                     "follow_up_message": response["generated_follow_up_message"]}})
         if saved and saved.get("leadId"):
-            db.leads.update_one({"_id": ObjectId(saved["leadId"]), "userId": str(user["_id"])},
-                                {"$push": {"notes": {"text": f"Call recap: {response['quick_recap']}",
-                                                         "outcome": "call_recap", "createdAt": datetime.now(timezone.utc)}}})
+            lead_update: dict[str, Any] = {"$push": {"notes": {
+                "text": f"Call recap: {response['quick_recap']}",
+                "outcome": "call_recap", "createdAt": datetime.now(timezone.utc)}}}
+            if follow_up_date:
+                lead_update["$set"] = {"followUpDate": follow_up_date, "status": "callback"}
+            db.leads.update_one({"_id": ObjectId(saved["leadId"]), "userId": str(user["_id"])}, lead_update)
     return response
 
 

@@ -40,7 +40,9 @@ fun SettingsScreen(
     var autoCallLogging by remember {
         mutableStateOf(callPrefs.getBoolean("enabled", false) && ContextCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED)
     }
-    val callPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+    val callPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
+        val granted = result[Manifest.permission.READ_PHONE_STATE] == true &&
+            result[Manifest.permission.POST_NOTIFICATIONS] == true
         autoCallLogging = granted
         callPrefs.edit().putBoolean("enabled", granted).apply()
     }
@@ -115,10 +117,12 @@ fun SettingsScreen(
 
                     SettingToggleRow(
                         title = "Automatically log phone calls",
-                        subtitle = "Save incoming and outgoing call time, duration, and matching lead. No audio is recorded.",
+                        subtitle = "Log call details and ask before recording an incoming call. Recording starts only when you choose it.",
                         checked = autoCallLogging,
                         onCheckedChange = { enabled ->
-                            if (enabled) callPermissionLauncher.launch(Manifest.permission.READ_PHONE_STATE)
+                            if (enabled) callPermissionLauncher.launch(
+                                arrayOf(Manifest.permission.READ_PHONE_STATE, Manifest.permission.POST_NOTIFICATIONS)
+                            )
                             else {
                                 autoCallLogging = false
                                 callPrefs.edit().putBoolean("enabled", false).apply()

@@ -81,3 +81,11 @@ class NotificationActionReceiver : BroadcastReceiver() {
         }
     }
 }
+
+class CallConsentDismissReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == NotificationHelper.ACTION_DISMISS_CALL_CONSENT) {
+            NotificationHelper.cancelIncomingCallConsent(context)
+        }
+    }
+}

@@ -9,9 +9,11 @@ import com.craftn.callpilot.domain.model.CallSource
 import com.craftn.callpilot.domain.model.CallType
 import com.craftn.callpilot.domain.repository.CallRepository
 import com.craftn.callpilot.domain.repository.ContactRepository
+import com.craftn.callpilot.service.notification.NotificationHelper
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Date
 import javax.inject.Inject
@@ -34,20 +36,24 @@ class CallStateReceiver : BroadcastReceiver() {
 
         when (intent.getStringExtra(TelephonyManager.EXTRA_STATE)) {
             TelephonyManager.EXTRA_STATE_RINGING -> {
+                val number = intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER).orEmpty()
                 prefs.edit()
-                    .putString("number", intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER).orEmpty())
+                    .putString("number", number)
                     .putString("type", "INCOMING")
                     .putLong("started", 0L)
                     .putLong("call_time", System.currentTimeMillis())
                     .apply()
+                NotificationHelper.showIncomingCallConsent(context, number)
             }
             TelephonyManager.EXTRA_STATE_OFFHOOK -> {
+                NotificationHelper.cancelIncomingCallConsent(context)
                 if (prefs.getLong("started", 0L) == 0L) {
                     prefs.edit().putLong("started", System.currentTimeMillis())
                         .putLong("call_time", System.currentTimeMillis()).apply()
                 }
             }
             TelephonyManager.EXTRA_STATE_IDLE -> {
+                NotificationHelper.cancelIncomingCallConsent(context)
                 val started = prefs.getLong("started", 0L)
                 val type = prefs.getString("type", null)
                 if (type != null && (started > 0L || type == "INCOMING")) {
@@ -65,18 +71,35 @@ class CallStateReceiver : BroadcastReceiver() {
                     CoroutineScope(Dispatchers.IO).launch {
                         try {
                             val contact = if (number.isNotBlank()) contactRepository.getContactByPhone(number) else null
-                            callRepository.insertCall(
-                                CallRecord(
-                                    id = "",
-                                    contactId = contact?.id,
-                                    contactName = contact?.name ?: number.ifBlank { "Unknown caller" },
-                                    phoneNumber = number,
-                                    callType = callType,
-                                    source = CallSource.AUTO_LOGGED,
+                            val digits = number.filter(Char::isDigit)
+                            val recordedCall = if (digits.isBlank()) null else callRepository.getAllCalls().first()
+                                .filter { call ->
+                                    call.source == CallSource.MANUAL_RECORDED && call.callType == callType &&
+                                        call.phoneNumber.filter(Char::isDigit) == digits &&
+                                        kotlin.math.abs(call.timestamp.time - callTime) <= 10 * 60 * 1000
+                                }
+                                .minByOrNull { kotlin.math.abs(it.timestamp.time - callTime) }
+                            if (recordedCall != null) {
+                                callRepository.updateCall(recordedCall.copy(
+                                    contactId = contact?.id ?: recordedCall.contactId,
+                                    contactName = contact?.name ?: recordedCall.contactName,
                                     durationSeconds = duration,
                                     timestamp = Date(callTime)
+                                ))
+                            } else {
+                                callRepository.insertCall(
+                                    CallRecord(
+                                        id = "",
+                                        contactId = contact?.id,
+                                        contactName = contact?.name ?: number.ifBlank { "Unknown caller" },
+                                        phoneNumber = number,
+                                        callType = callType,
+                                        source = CallSource.AUTO_LOGGED,
+                                        durationSeconds = duration,
+                                        timestamp = Date(callTime)
+                                    )
                                 )
-                            )
+                            }
                         } finally {
                             pendingResult.finish()
                         }

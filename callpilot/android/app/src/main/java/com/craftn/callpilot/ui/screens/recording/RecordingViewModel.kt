@@ -15,9 +15,11 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.*
+import kotlin.math.abs
 import javax.inject.Inject
 
 enum class RecordingState {
@@ -48,6 +50,7 @@ class RecordingViewModel @Inject constructor(
     private var currentFile: File? = null
     private var currentContactName: String = "Client"
     private var currentPhoneNumber: String = ""
+    private var currentCallType: CallType = CallType.OUTGOING
 
     init {
         viewModelScope.launch {
@@ -66,9 +69,10 @@ class RecordingViewModel @Inject constructor(
         }
     }
 
-    fun startRecording(contactName: String, phone: String) {
+    fun startRecording(contactName: String, phone: String, callTypeName: String = "OUTGOING") {
         currentContactName = contactName.ifBlank { "Client" }
         currentPhoneNumber = phone
+        currentCallType = try { CallType.valueOf(callTypeName) } catch (_: Exception) { CallType.OUTGOING }
         val cacheDir = context.cacheDir
         val audioFile = File(cacheDir, "recording_${System.currentTimeMillis()}.m4a")
         currentFile = audioFile
@@ -88,18 +92,31 @@ class RecordingViewModel @Inject constructor(
             )
 
             // Save preliminary call record
-            val callId = UUID.randomUUID().toString()
-            val newCall = CallRecord(
+            val digits = currentPhoneNumber.filter(Char::isDigit)
+            val nearbyCall = if (digits.isBlank()) null else callRepository.getAllCalls().first()
+                .filter { call ->
+                    call.callType == currentCallType &&
+                        call.phoneNumber.filter(Char::isDigit) == digits &&
+                        abs(call.timestamp.time - System.currentTimeMillis()) <= 10 * 60 * 1000
+                }
+                .minByOrNull { abs(it.timestamp.time - System.currentTimeMillis()) }
+            val callId = nearbyCall?.id ?: UUID.randomUUID().toString()
+            val savedCall = (nearbyCall ?: CallRecord(
                 id = callId,
                 contactName = currentContactName,
-                phoneNumber = currentPhoneNumber.ifBlank { "+1 555-0199" },
-                callType = CallType.OUTGOING,
+                phoneNumber = currentPhoneNumber,
+                callType = currentCallType,
+                source = CallSource.MANUAL_RECORDED,
+                durationSeconds = duration
+            )).copy(
+                contactName = currentContactName,
+                phoneNumber = currentPhoneNumber,
                 source = CallSource.MANUAL_RECORDED,
                 durationSeconds = duration,
                 hasRecording = true,
                 recordingPath = file?.absolutePath
             )
-            callRepository.insertCall(newCall)
+            if (nearbyCall == null) callRepository.insertCall(savedCall) else callRepository.updateCall(savedCall)
 
             if (file != null && file.exists()) {
                 val result = processCallRecordingUseCase(callId, file, currentContactName)

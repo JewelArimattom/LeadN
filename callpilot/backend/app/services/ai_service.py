@@ -2,6 +2,7 @@
 
 import json
 import logging
+import asyncio
 from datetime import datetime, timezone
 from typing import Any
 
@@ -99,6 +100,7 @@ Generate a structured JSON response with these exact keys:
     "user_commitments": ["what the user promised to do"],
     "client_commitments": ["what the client promised to do"],
     "next_steps": ["actionable next step 1", "actionable next step 2"],
+    "actions": [{"title": "specific task", "assignee": "user|client", "priority": "high|medium|low", "deadline": "ISO 8601 date-time or null"}],
     "suggested_follow_up_date": "ISO date string or null",
     "follow_up_message": "A contextual follow-up message the user can send",
     "sentiment_score": 0.0 to 1.0
@@ -108,7 +110,8 @@ Important rules:
 - Do NOT fabricate commitments or details not present in the transcript
 - Mark interest_level as "unknown" if there isn't enough evidence
 - Be specific about what was actually discussed
-- Generate actionable, concrete next steps"""
+- Generate actionable, concrete next steps
+- Include deadlines only when the transcript states a date or clear timeframe; otherwise use null. Never invent dates."""
 
         try:
             response = await self.client.chat.completions.create(
@@ -220,23 +223,62 @@ Rules:
 
 
 class GeminiProvider(AIProvider):
-    """Google Gemini API integration."""
+    """Gemini Flash transcription and call analysis."""
+
+    MODEL = "gemini-3.5-flash-lite"
 
     def __init__(self):
         try:
-            import google.generativeai as genai
-            genai.configure(api_key=settings.GEMINI_API_KEY)
-            self.model = genai.GenerativeModel("gemini-1.5-flash")
+            if not settings.GEMINI_API_KEY:
+                raise ValueError("GEMINI_API_KEY is not configured")
+            from google import genai
+            from google.genai import types
+
+            self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
+            self.types = types
         except Exception as e:
             logger.error(f"Failed to initialize Gemini: {e}")
-            self.model = None
+            self.client = None
+            self.types = None
 
     async def transcribe(self, audio_path: str, language: str = "en") -> dict:
-        """Gemini doesn't have dedicated STT - return info to use alternative."""
-        return {"error": "Use OpenAI Whisper or local model for transcription"}
+        """Transcribe uploaded call audio with the free Gemini Flash model."""
+        if not self.client:
+            return {"error": "Gemini is not initialized. Check GEMINI_API_KEY."}
+
+        uploaded_file = None
+        try:
+            uploaded_file = await asyncio.to_thread(self.client.files.upload, file=audio_path)
+            response = await self.client.aio.models.generate_content(
+                model=self.MODEL,
+                contents=[
+                    uploaded_file,
+                    f"Transcribe all audible speech verbatim in {language}. "
+                    "Keep the original language. Do not summarize, translate, or add commentary.",
+                ],
+                config=self.types.GenerateContentConfig(temperature=0),
+            )
+            transcript = (response.text or "").strip()
+            if not transcript:
+                return {"error": "Gemini returned an empty transcript."}
+            return {
+                "full_text": transcript,
+                "segments": [],
+                "language": language,
+                "confidence_score": None,
+            }
+        except Exception as e:
+            logger.error("Gemini transcription error: %s", e)
+            return {"error": str(e)}
+        finally:
+            if uploaded_file is not None:
+                try:
+                    await asyncio.to_thread(self.client.files.delete, name=uploaded_file.name)
+                except Exception as e:
+                    logger.warning("Could not delete temporary Gemini audio upload: %s", e)
 
     async def summarize(self, transcript: str) -> dict:
-        if not self.model:
+        if not self.client:
             return {"error": "Gemini not initialized"}
 
         prompt = f"""Analyze this business conversation transcript and return a JSON object with these exact keys:
@@ -247,19 +289,21 @@ class GeminiProvider(AIProvider):
 - user_commitments: array of user promises
 - client_commitments: array of client promises
 - next_steps: array of actionable steps
+- actions: array of objects with title, assignee (user or client), priority (high, medium, low), and deadline (ISO 8601 date-time or null)
 - suggested_follow_up_date: ISO date or null
 - follow_up_message: contextual follow-up message
 - sentiment_score: 0.0 to 1.0
 
-Only include information actually present in the transcript. Never fabricate.
+Only include information actually present in the transcript. Never fabricate dates or deadlines.
 
 Transcript:
 {transcript}"""
 
         try:
-            response = await self.model.generate_content_async(
-                prompt,
-                generation_config={"response_mime_type": "application/json", "temperature": 0.3},
+            response = await self.client.aio.models.generate_content(
+                model=self.MODEL,
+                contents=prompt,
+                config=self.types.GenerateContentConfig(response_mime_type="application/json", temperature=0.3),
             )
             return json.loads(response.text)
         except Exception as e:
@@ -267,7 +311,7 @@ Transcript:
             return {"error": str(e)}
 
     async def extract_actions(self, transcript: str) -> dict:
-        if not self.model:
+        if not self.client:
             return {"error": "Gemini not initialized"}
 
         prompt = f"""Extract action items from this conversation. Return JSON with:
@@ -278,9 +322,10 @@ Transcript:
 Transcript: {transcript}"""
 
         try:
-            response = await self.model.generate_content_async(
-                prompt,
-                generation_config={"response_mime_type": "application/json", "temperature": 0.2},
+            response = await self.client.aio.models.generate_content(
+                model=self.MODEL,
+                contents=prompt,
+                config=self.types.GenerateContentConfig(response_mime_type="application/json", temperature=0.2),
             )
             return json.loads(response.text)
         except Exception as e:
@@ -288,7 +333,7 @@ Transcript: {transcript}"""
             return {"error": str(e)}
 
     async def generate_follow_up(self, context: dict) -> dict:
-        if not self.model:
+        if not self.client:
             return {"error": "Gemini not initialized"}
 
         prompt = f"""Generate a professional follow-up message. Return JSON with:
@@ -299,9 +344,10 @@ Transcript: {transcript}"""
 Context: {json.dumps(context)}"""
 
         try:
-            response = await self.model.generate_content_async(
-                prompt,
-                generation_config={"response_mime_type": "application/json", "temperature": 0.5},
+            response = await self.client.aio.models.generate_content(
+                model=self.MODEL,
+                contents=prompt,
+                config=self.types.GenerateContentConfig(response_mime_type="application/json", temperature=0.5),
             )
             return json.loads(response.text)
         except Exception as e:
@@ -309,7 +355,7 @@ Context: {json.dumps(context)}"""
             return {"error": str(e)}
 
     async def chat(self, message: str, context: str = "") -> str:
-        if not self.model:
+        if not self.client:
             return "Gemini AI is not available."
 
         prompt = f"""You are CallPilot AI Assistant. Use this context about the user's data:
@@ -321,7 +367,10 @@ Rules: Only reference provided context. Never fabricate details. Be concise.
 User: {message}"""
 
         try:
-            response = await self.model.generate_content_async(prompt)
+            response = await self.client.aio.models.generate_content(
+                model=self.MODEL,
+                contents=prompt,
+            )
             return response.text
         except Exception as e:
             logger.error(f"Gemini chat error: {e}")

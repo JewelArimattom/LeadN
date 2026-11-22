@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import com.craftn.callpilot.MainActivity
 import com.craftn.callpilot.R
 import com.craftn.callpilot.domain.model.Reminder
@@ -16,12 +17,16 @@ object NotificationHelper {
     const val CHANNEL_RECORDING = "recording_channel"
     const val CHANNEL_REMINDERS = "reminders_channel"
     const val CHANNEL_AI_INSIGHTS = "ai_insights_channel"
+    const val CHANNEL_CALL_CONSENT = "call_consent_channel"
 
     const val ACTION_COMPLETE = "com.craftn.callpilot.ACTION_COMPLETE"
     const val ACTION_SNOOZE = "com.craftn.callpilot.ACTION_SNOOZE"
     const val EXTRA_REMINDER_ID = "extra_reminder_id"
     const val EXTRA_REMINDER_TITLE = "extra_reminder_title"
     const val EXTRA_REMINDER_DESC = "extra_reminder_desc"
+    const val ACTION_DISMISS_CALL_CONSENT = "com.craftn.callpilot.ACTION_DISMISS_CALL_CONSENT"
+    const val EXTRA_CALL_NUMBER = "extra_call_number"
+    const val EXTRA_OPEN_RECORDER = "extra_open_recorder"
 
     fun createNotificationChannels(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -54,8 +59,60 @@ object NotificationHelper {
                 description = "AI recommendations and call recaps"
             }
 
-            notificationManager.createNotificationChannels(listOf(recordingChannel, remindersChannel, aiChannel))
+            val callConsentChannel = NotificationChannel(
+                CHANNEL_CALL_CONSENT,
+                "Incoming call recording consent",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Asks before recording and analyzing an incoming call"
+                enableVibration(false)
+                setShowBadge(false)
+            }
+
+            notificationManager.createNotificationChannels(listOf(recordingChannel, remindersChannel, aiChannel, callConsentChannel))
         }
+    }
+
+    fun showIncomingCallConsent(context: Context, phoneNumber: String) {
+        if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return
+        val number = phoneNumber.ifBlank { "Unknown caller" }
+        val openIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra(EXTRA_OPEN_RECORDER, true)
+            putExtra(EXTRA_CALL_NUMBER, phoneNumber)
+        }
+        val openPendingIntent = PendingIntent.getActivity(
+            context, "record_$phoneNumber".hashCode(), openIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val dismissIntent = Intent(context, CallConsentDismissReceiver::class.java).apply {
+            action = ACTION_DISMISS_CALL_CONSENT
+        }
+        val dismissPendingIntent = PendingIntent.getBroadcast(
+            context, "dismiss_$phoneNumber".hashCode(), dismissIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val notification = NotificationCompat.Builder(context, CHANNEL_CALL_CONSENT)
+            .setSmallIcon(android.R.drawable.ic_btn_speak_now)
+            .setContentTitle("Record and recap this call?")
+            .setContentText("$number · CallPilot uses the microphone; speakerphone may help capture both sides.")
+            .setStyle(NotificationCompat.BigTextStyle().bigText(
+                "Would you like to record this call and create an AI transcript and recap? " +
+                    "Recording starts only after you open CallPilot and tap Start Recording."
+            ))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(openPendingIntent)
+            .addAction(android.R.drawable.ic_btn_speak_now, "Yes, open recorder", openPendingIntent)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "No, thanks", dismissPendingIntent)
+            .build()
+        (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
+            .notify(INCOMING_CALL_NOTIFICATION_ID, notification)
+    }
+
+    fun cancelIncomingCallConsent(context: Context) {
+        (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
+            .cancel(INCOMING_CALL_NOTIFICATION_ID)
     }
 
     fun showReminderNotification(context: Context, reminderId: String, title: String, description: String?) {
@@ -156,4 +213,6 @@ object NotificationHelper {
             alarmManager.cancel(pendingIntent)
         }
     }
+
+    const val INCOMING_CALL_NOTIFICATION_ID = 2001
 }

@@ -1,6 +1,9 @@
 package com.craftn.callpilot.ui.screens.recording
 
 import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -13,6 +16,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,13 +36,20 @@ import com.craftn.callpilot.ui.theme.StatusRed
 @Composable
 fun RecordingScreen(
     viewModel: RecordingViewModel,
+    initialContactName: String = "",
+    initialPhoneNumber: String = "",
+    initialCallType: String = "OUTGOING",
     onNavigateBack: () -> Unit,
     onNavigateToRecap: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    var contactName by remember { mutableStateOf("") }
-    var phoneNumber by remember { mutableStateOf("") }
+    var contactName by remember(initialContactName) { mutableStateOf(initialContactName) }
+    var phoneNumber by remember(initialPhoneNumber) { mutableStateOf(initialPhoneNumber) }
+    val context = LocalContext.current
+    val recordPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) viewModel.startRecording(contactName, phoneNumber, initialCallType)
+    }
 
     // Pulsing animation for the recording indicator
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
@@ -218,7 +230,13 @@ fun RecordingScreen(
                 when (uiState.state) {
                     RecordingState.IDLE -> {
                         Button(
-                            onClick = { viewModel.startRecording(contactName, phoneNumber) },
+                            onClick = {
+                                if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                                    viewModel.startRecording(contactName, phoneNumber, initialCallType)
+                                } else {
+                                    recordPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                }
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp),
